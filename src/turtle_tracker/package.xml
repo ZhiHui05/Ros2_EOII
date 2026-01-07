@@ -1,17 +1,25 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+schematypens="http://www.w3.org/2001/XMLSchema"?>
+
 <package format="3">
   <name>turtle_tracker</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
-  <maintainer email="zli14z@todo.todo">zli14z</maintainer>
-  <license>TODO: License declaration</license>
+  <description>Seguimiento de tortugas con ROS2</description>
 
+  <maintainer email="zli14z@todo.todo">zli14z</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Build system -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- Runtime dependencies -->
   <depend>rclpy</depend>
   <depend>turtlesim</depend>
   <depend>geometry_msgs</depend>
-  <depend>std_srvs</depend>
+  <depend>turtle_tracker_interfaces</depend>
 
+  <!-- Tests -->
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

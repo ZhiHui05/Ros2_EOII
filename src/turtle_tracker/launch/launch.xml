@@ -1,0 +1,10 @@
+<launch>
+  <node pkg="turtlesim" exec="turtlesim_node" name="sim"/>
+  
+  <node pkg="turtle_tracker" exec="tracker_node" name="tracker">
+    <param name="explorer_x" value="2.0"/>
+    <param name="explorer_y" value="2.0"/>
+  </node>
+
+  <node pkg="turtle_tracker" exec="client_node" name="client" output="screen"/>
+</launch>
