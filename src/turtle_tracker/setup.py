@@ -28,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             'explorer_node = turtle_tracker.explorer_node:main',
+	    'client_node = turtle_tracker.client_node:main',
         ],
     },
 )

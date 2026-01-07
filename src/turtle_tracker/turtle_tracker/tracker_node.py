@@ -5,7 +5,7 @@ from rclpy.action import ActionServer
 from turtlesim.srv import Spawn
 from turtlesim.msg import Pose
 from geometry_msgs.msg import Twist
-from turtle_tracker_interfaces.srv import TurtleInfo as TurtleInfoSrv
+#from turtle_tracker_interfaces.srv import TurtleInfo as TurtleInfoSrv
 from turtle_tracker_interfaces.action import TurtleInfo as TurtleInfoAction
 
 class TurtleTracker(Node):
