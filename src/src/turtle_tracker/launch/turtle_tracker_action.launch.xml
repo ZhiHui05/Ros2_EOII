@@ -1,0 +1,31 @@
+<launch>
+
+    <!-- Argumentos para la posición inicial de explorer -->
+    <arg name="spawn_x" default="2.0"/>
+    <arg name="spawn_y" default="2.0"/>
+
+    <!-- TurtleSim -->
+    <node
+        pkg="turtlesim"
+        exec="turtlesim_node"
+        name="turtlesim"
+        output="screen"/>
+
+    <!-- Explorer (Action Server) -->
+    <node
+        pkg="turtle_tracker"
+        exec="explorer_node"
+        name="explorer_node"
+        output="screen">
+        <param name="spawn_x" value="$(var spawn_x)"/>
+        <param name="spawn_y" value="$(var spawn_y)"/>
+    </node>
+
+    <!-- Cliente de la Action -->
+    <node
+        pkg="turtle_tracker"
+        exec="client_node"
+        name="info_client"
+        output="screen"/>
+
+</launch>

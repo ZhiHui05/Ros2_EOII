@@ -12,4 +12,7 @@ float32 explorer_theta
 float32 explorer_linear_velocity
 float32 explorer_angular_velocity
 
+float32 turtle1_linear_velocity
+float32 turtle1_angular_velocity
+
 float32 distance
