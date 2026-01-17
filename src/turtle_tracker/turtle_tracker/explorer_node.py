@@ -9,8 +9,7 @@ from geometry_msgs.msg import Twist
 from turtle_tracker_interfaces.action import TurtleInfo
 
 import math
-import asyncio
-
+import time
 
 class ExplorerNode(Node):
 
@@ -111,7 +110,7 @@ class ExplorerNode(Node):
         self.last_cmd = cmd
         self.cmd_pub.publish(cmd)
 
-    async def execute_callback(self, goal_handle):
+    def execute_callback(self, goal_handle):
         # Acción: enviar feedback periódico hasta que explorer alcance a turtle1
         self.get_logger().info('Action turtle_info aceptada')
 
@@ -119,7 +118,7 @@ class ExplorerNode(Node):
 
         while rclpy.ok():
             if self.turtle1_pose is None or self.explorer_pose is None:
-                await asyncio.sleep(0.5)
+                time.sleep(0.5)
                 continue
 
             dx = self.turtle1_pose.x - self.explorer_pose.x
@@ -142,9 +141,9 @@ class ExplorerNode(Node):
             feedback.distance = distance
 
             goal_handle.publish_feedback(feedback)
-
-            # Condición de finalización: explorer alcanza a turtle1
-            if distance < 0.2:
+            
+            # Condición de finalización: explorer alcanza a turtle1 < 0.5 (ajustado para coincidir con E6 client)
+            if distance < 0.5:
                 stop = Twist()
                 self.cmd_pub.publish(stop)
                 goal_handle.succeed()
@@ -165,10 +164,10 @@ class ExplorerNode(Node):
                 result.turtle1_angular_velocity = float(self.turtle1_pose.angular_velocity)
                 result.distance = float(distance)
 
-                self.get_logger().info('Explorer ha alcanzado turtle1')
+                self.get_logger().info('Explorer ha alcanzado turtle1. Action finalizada.')
                 return result
 
-            await asyncio.sleep(1.0)
+            time.sleep(1.0)
 
 
 def main(args=None):
