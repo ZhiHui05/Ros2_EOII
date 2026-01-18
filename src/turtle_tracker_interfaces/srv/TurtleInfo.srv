@@ -1,0 +1,18 @@
+# Request (vacía)
+---
+
+float32 turtle1_x
+float32 turtle1_y
+float32 turtle1_theta
+
+float32 explorer_x
+float32 explorer_y
+float32 explorer_theta
+
+float32 explorer_linear_velocity
+float32 explorer_angular_velocity
+
+float32 turtle1_linear_velocity
+float32 turtle1_angular_velocity
+
+float32 distance

@@ -1,0 +1,31 @@
+<launch>
+    
+    <!-- E5: Argumentos para la posición inicial de explorer -->
+    <arg name="spawn_x" default="2.0" description="Posición X inicial de explorer"/>
+    <arg name="spawn_y" default="2.0" description="Posición Y inicial de explorer"/>
+
+    <!-- TurtleSim Simulator -->
+    <node
+        pkg="turtlesim"
+        exec="turtlesim_node"
+        name="turtlesim"
+        output="screen"/>
+
+    <!-- E1+E2+E3: Explorer Node con Service Server -->
+    <node
+        pkg="turtle_tracker"
+        exec="explorer_service_node"
+        name="explorer_service_node"
+        output="screen">
+        <param name="spawn_x" value="$(var spawn_x)"/>
+        <param name="spawn_y" value="$(var spawn_y)"/>
+    </node>
+
+    <!-- E4: Service Client Node -->
+    <node
+        pkg="turtle_tracker"
+        exec="service_client_node"
+        name="service_client_node"
+        output="screen"/>
+
+</launch>
