@@ -7,6 +7,14 @@ import math
 
 
 class ActionClientNode(Node):
+    """
+    Nodo "Gestor" (Action Client Node).
+    Funcionalidades principales:
+    1. Actúa como CLIENTE de la acción 'turtle_info'.
+    2. Monitorea pasivamente la distancia entre tortugas.
+    3. Cuando detecta movimiento (se separan > 0.55m), dispara la Acción (send_goal).
+    4. Recibe Feedback continuo mientras dura la persecución y el Resultado final cuando termina.
+    """
 
     def __init__(self):
         super().__init__('action_client_node')
@@ -35,6 +43,10 @@ class ActionClientNode(Node):
         self.explorer_pose = msg
 
     def control_timer_callback(self):
+        """
+        Loop de monitoreo (se ejecuta cada 0.5s).
+        Decide cuándo activar la acción basándose en la distancia.
+        """
         # Verificar si tenemos datos de posición
         if self.turtle1_pose is None or self.explorer_pose is None:
             return
@@ -44,27 +56,31 @@ class ActionClientNode(Node):
         dy = self.turtle1_pose.y - self.explorer_pose.y
         distance = math.sqrt(dx**2 + dy**2)
 
-        # Lógica de activación
+        # Lógica de activación automática:
+        # Si NO estamos persiguiendo ya (goal_active=False) Y se han separado mucho (>0.55)
         if not self.goal_active and distance > 0.55:
             self.get_logger().info(f'Movimiento detectado (Distancia: {distance:.2f}). Activando Action (E6)...')
             self.send_goal()
 
     def send_goal(self):
+        """Envía la petición (Goal) al Action Server para iniciar la tarea."""
         # Esperar servidor si no está listo
         if not self.client.wait_for_server(timeout_sec=1.0):
             self.get_logger().warning('Action Server no disponible.. .')
             return
 
         goal_msg = TurtleInfo.Goal()
+        # Marcamos que ya hay una meta activa para no enviarla muchas veces
         self.goal_active = True 
         
         self._future = self.client.send_goal_async(
             goal_msg,
-            feedback_callback=self.feedback_callback
+            feedback_callback=self.feedback_callback # Definimos callback para feedback
         )
         self._future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
+        """Callback ejecutado cuando el servidor acepta (o rechaza) la meta inicial."""
         goal_handle = future.result()
         if not goal_handle.accepted:
             self.get_logger().error('Goal rechazada por el servidor.')
@@ -72,11 +88,16 @@ class ActionClientNode(Node):
             return
 
         self.get_logger().info('Goal aceptada por Action Server (E6).')
+        
+        # Configurar callback para obtener el RESULTADO final (cuando termine)
         self._result_future = goal_handle.get_result_async()
         self._result_future.add_done_callback(self.result_callback)
 
     def feedback_callback(self, feedback_msg):
-        """E6: Recibir y mostrar feedback periódico"""
+        """
+        E6: Recibir y mostrar feedback periódico.
+        Se ejecuta cada vez que el servidor publica feedback (mientras persigue).
+        """
         f = feedback_msg.feedback
         self.get_logger().info(
             f'\n╔════════════════════════════════════════════╗\n'

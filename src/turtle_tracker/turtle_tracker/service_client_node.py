@@ -3,6 +3,13 @@ from rclpy.node import Node
 from turtle_tracker_interfaces.srv import TurtleInfo
 
 class ServiceClientNode(Node):
+    """
+    Nodo "Observador" (Service Client Node).
+    Funcionalidades principales:
+    1. Actúa como CLIENTE del servicio 'turtle_info'.
+    2. Usa un Timer para consultar (Polling) el estado cada 1 segundo.
+    3. Muestra la información recibida de forma estructurada en la consola.
+    """
     
     def __init__(self):
         super().__init__('service_client_node')
@@ -16,19 +23,28 @@ class ServiceClientNode(Node):
             self.get_logger().info('Servicio no disponible, esperando.. .')
         
         # E4: Timer para llamar cada 1 segundo
+        # Configura un bucle para ejecutar self.call_service cada 1.0 segundos
         self.timer = self.create_timer(1.0, self.call_service)
         
         self.get_logger().info('Cliente de servicio (E4) iniciado - consultando cada 1 segundo')
     
     def call_service(self):
-        """E4: Invocar el servicio turtle_info cada segundo"""
+        """
+        E4: Invocar el servicio turtle_info cada segundo.
+        Envía una petición vacía (o con datos si fuera necesario) al servidor.
+        """
         request = TurtleInfo.Request()
         
+        # Llamada asíncrona: no bloquea el nodo mientras espera respuesta
         future = self.client.call_async(request)
+        # Define qué función ejecutar cuando llegue la respuesta
         future.add_done_callback(self.response_callback)
     
     def response_callback(self, future):
-        """E4: Manejar la respuesta del servicio"""
+        """
+        E4: Callback que maneja la respuesta del servicio una vez recibida.
+        Extrae los datos y los imprime.
+        """
         try:
             response = future.result()
             

@@ -12,6 +12,14 @@ import math
 import time
 
 class ExplorerActionNode(Node):
+    """
+    Nodo "Ejecutor" (Explorer Action Node).
+    Funcionalidades principales:
+    1. Igual que el ServiceNode, spawnea y controla a 'explorer' para perseguir a 'turtle1'.
+    2. En vez de un servicio simple, ofrece un ACTION SERVER ('turtle_info').
+    3. La Acción permite reportar Feedback continuo mientras explorer persigue a turtle1,
+       y devuelve un Resultado final cuando la atrapa (distancia < 0.5).
+    """
 
     def __init__(self):
         super().__init__('explorer_action_node')
@@ -75,6 +83,8 @@ class ExplorerActionNode(Node):
         self.create_timer(0.1, self.control_loop, callback_group=self.callback_group)
 
         # ===== E6: Action Server (turtle_info) =====
+        # Crea el servidor de acción.
+        # execute_callback: Función principal que se ejecuta cuando se acepta una meta.
         self.action_server = ActionServer(
             self,
             TurtleInfo,
@@ -93,7 +103,7 @@ class ExplorerActionNode(Node):
         self.explorer_pose = msg
 
     def control_loop(self):
-        # E2: Control proporcional para seguir a turtle1
+        # Lógica de Control (P-Controller) - Igual que en el nodo de servicio
         if self.turtle1_pose is None or self.explorer_pose is None:
             return
 
@@ -113,11 +123,16 @@ class ExplorerActionNode(Node):
         self.cmd_pub.publish(cmd)
 
     def execute_callback(self, goal_handle):
-        """E6: Action Server - enviar feedback periódico hasta que explorer alcance a turtle1"""
+        """
+        E6: Callback PRINCIPAL de la Acción.
+        Se ejecuta en un hilo separado cuando llega una petición (Goal).
+        Bucle: Monitorea la persecución, envía Feedback periódico y verifica éxito.
+        """
         self.get_logger().info('Action turtle_info aceptada (E6)')
 
         feedback = TurtleInfo.Feedback()
-
+        
+        # Bucle principal de la acción: se ejecuta mientras ROS esté activo
         while rclpy.ok():
             if self.turtle1_pose is None or self.explorer_pose is None:
                 time.sleep(0.5)
@@ -127,7 +142,8 @@ class ExplorerActionNode(Node):
             dy = self.turtle1_pose.y - self.explorer_pose.y
             distance = math.sqrt(dx**2 + dy**2)
 
-            # Rellenar Feedback con toda la información
+            # Rellenar Feedback con toda la información actual
+            # Esto se envía al cliente *mientras* la acción sigue ejecutándose
             feedback.turtle1_x = self.turtle1_pose.x
             feedback.turtle1_y = self.turtle1_pose.y
             feedback.turtle1_theta = self.turtle1_pose.theta
@@ -144,14 +160,17 @@ class ExplorerActionNode(Node):
 
             goal_handle.publish_feedback(feedback)
             
-            # E6: Condición de finalización - explorer alcanza a turtle1
+            # E6: Condición de FINALIZACIÓN (Éxito)
+            # Si explorer está muy cerca (catch), termina la acción.
             if distance < 0.5:
                 # Detener explorer
                 stop = Twist()
                 self.cmd_pub.publish(stop)
                 
+                # Marcar la acción como Exitosa
                 goal_handle.succeed()
 
+                # Construir y devolver el Resultado Final
                 result = TurtleInfo.Result()
                 result.turtle1_x = float(self.turtle1_pose.x)
                 result.turtle1_y = float(self.turtle1_pose.y)

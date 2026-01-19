@@ -10,6 +10,13 @@ from turtle_tracker_interfaces.srv import TurtleInfo
 import math
 
 class ExplorerServiceNode(Node):
+    """
+    Nodo "Cerebro" (Explorer Service Node).
+    Funcionalidades principales:
+    1. Spawnea (crea) la tortuga 'explorer' en una posición inicial configurable.
+    2. Hace que 'explorer' persiga a 'turtle1' usando un controlador Proporcional (P).
+    3. Ofrece un SERVICIO ('turtle_info') que devuelve el estado actual de la persecución (posiciones y distancias).
+    """
 
     def __init__(self):
         super().__init__('explorer_service_node')
@@ -70,9 +77,11 @@ class ExplorerServiceNode(Node):
         self.last_cmd = Twist()
 
         # E2: Timer de control a 10 Hz
+        # Llama a la funcion de control 10 veces por segundo para calcular movimiento
         self.create_timer(0.1, self.control_loop, callback_group=self.callback_group)
 
         # ===== E3: Service Server (turtle_info) =====
+        # Crea el SERVIDOR del servicio. Cuando alguien llame a 'turtle_info', se ejecuta self.service_callback
         self.service_server = self.create_service(
             TurtleInfo,
             'turtle_info',
@@ -82,35 +91,49 @@ class ExplorerServiceNode(Node):
         self.get_logger().info('Servicio turtle_info (E3) disponible')
 
     def turtle1_callback(self, msg):
+        # Callback que se ejecuta cada vez que llega un mensaje de posición de turtle1
         # Actualiza la pose de la tortuga principal
         self.turtle1_pose = msg
 
     def explorer_callback(self, msg):
+        # Callback que se ejecuta cada vez que llega un mensaje de posición de explorer
         # Actualiza la pose de la tortuga perseguidora
         self.explorer_pose = msg
 
     def control_loop(self):
+        # Lógica de Control (P-Controller)
+        # Se ejecuta periódicamente (10Hz) para mover a explorer hacia turtle1
+        
+        # Si aun no tenemos las posiciones de ambas tortugas, no hacemos nada
         # E2: Control proporcional para seguir a turtle1
         if self.turtle1_pose is None or self.explorer_pose is None:
             return
 
+        # 1. Calcular error de posición (distancia)
         dx = self.turtle1_pose.x - self.explorer_pose.x
         dy = self.turtle1_pose.y - self.explorer_pose.y
         distance = math.sqrt(dx**2 + dy**2)
 
+        # 2. Calcular error de orientación (ángulo hacia el objetivo)
         target_angle = math.atan2(dy, dx)
         angle_error = target_angle - self.explorer_pose.theta
+        # Normalizar el ángulo entre -pi y pi
         angle_error = math.atan2(math.sin(angle_error), math.cos(angle_error))
 
+        # 3. Aplicar ganancias (K) para obtener comandos de velocidad
         cmd = Twist()
-        cmd.linear.x = self.k_linear * distance
-        cmd.angular.z = self.k_angular * angle_error
+        cmd.linear.x = self.k_linear * distance        # Velocidad lineal proporcional a la distancia
+        cmd.angular.z = self.k_angular * angle_error   # Velocidad angular proporcional al error de ángulo
 
         self.last_cmd = cmd
         self.cmd_pub.publish(cmd)
 
     def service_callback(self, request, response):
-        """E3: Service Server que retorna información instantánea"""
+        """
+        E3: Callback del Service Server.
+        Se ejecuta SOLO cuando un Cliente (Node) llama al servicio.
+        Recopila toda la información actual y la devuelve en la respuesta.
+        """
         if self.turtle1_pose is None or self.explorer_pose is None:
             self.get_logger().warning('Poses no disponibles aún')
             return response
