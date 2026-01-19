@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from rclpy.action import ActionServer
+from rclpy.action import ActionServer, CancelResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
 from turtlesim.srv import Spawn
@@ -91,8 +91,16 @@ class ExplorerActionNode(Node):
             'turtle_info',
             self.execute_callback,
             callback_group=self.callback_group,
+            cancel_callback=self.cancel_callback
         )
         self.get_logger().info('Action Server turtle_info (E6) disponible')
+
+    def cancel_callback(self, goal_handle):
+        """
+        Acepta peticiones de cancelación del cliente.
+        """
+        self.get_logger().info('Recibida petición de cancelación')
+        return CancelResponse.ACCEPT
 
     def turtle1_callback(self, msg):
         # Actualiza la pose de la tortuga principal
@@ -134,6 +142,12 @@ class ExplorerActionNode(Node):
         
         # Bucle principal de la acción: se ejecuta mientras ROS esté activo
         while rclpy.ok():
+            # Manejo de cancelación
+            if goal_handle.is_cancel_requested:
+                goal_handle.canceled()
+                self.get_logger().info('Action cancelada por el cliente')
+                return TurtleInfo.Result()
+
             if self.turtle1_pose is None or self.explorer_pose is None:
                 time.sleep(0.5)
                 continue
